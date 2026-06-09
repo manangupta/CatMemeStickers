@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1A1A2E">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="#16213E">
+
+        <TextView
+            android:id="@+id/packName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cat Meme Stickers"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/packPublisher"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="by CatMemeStickers"
+            android:textColor="#A0A0C0"
+            android:textSize="14sp"
+            android:layout_marginTop="2dp" />
+
+        <TextView
+            android:id="@+id/stickerCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15 stickers"
+            android:textColor="#6C63FF"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
+
+    <!-- Sticker Grid -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/stickerGrid"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:clipToPadding="false" />
+
+    <!-- Add Button -->
+    <Button
+        android:id="@+id/addToWhatsApp"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:text="Add to WhatsApp"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:backgroundTint="#25D366"
+        android:stateListAnimator="@null" />
+
+</LinearLayout>
