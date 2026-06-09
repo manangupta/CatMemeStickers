@@ -31,6 +31,49 @@
         { "image_file": "14_biz_email.webp",        "emojis": ["📧","💼"] },
         { "image_file": "15_biz_synergize.webp",    "emojis": ["💼","😎"] }
       ]
+    },
+    {
+      "identifier": "cat_meme_pack_2",
+      "name": "Cat Memes Pack 2",
+      "publisher": "CatMemeStickers",
+      "tray_image_file": "cat_memes_01.webp",
+      "publisher_email": "",
+      "publisher_website": "",
+      "privacy_policy_website": "",
+      "license_agreement_website": "",
+      "image_data_version": "1",
+      "avoid_cache": false,
+      "animated_sticker_pack": false,
+      "stickers": [
+        { "image_file": "cat_memes_01.webp", "emojis": ["😹"] },
+        { "image_file": "cat_memes_02.webp", "emojis": ["😂"] },
+        { "image_file": "cat_memes_04.webp", "emojis": ["😸"] },
+        { "image_file": "cat_memes_05.webp", "emojis": ["🐱"] },
+        { "image_file": "cat_memes_06.webp", "emojis": ["😼"] },
+        { "image_file": "cat_memes_08.webp", "emojis": ["😺"] },
+        { "image_file": "cat_memes_09.webp", "emojis": ["🙀"] },
+        { "image_file": "cat_memes_10.webp", "emojis": ["😿"] },
+        { "image_file": "cat_memes_11.webp", "emojis": ["😾"] },
+        { "image_file": "cat_memes_12.webp", "emojis": ["🤣"] },
+        { "image_file": "cat_memes_13.webp", "emojis": ["😹"] },
+        { "image_file": "cat_memes_14.webp", "emojis": ["😂"] },
+        { "image_file": "cat_memes_15.webp", "emojis": ["🐾"] },
+        { "image_file": "cat_memes_16.webp", "emojis": ["😸"] },
+        { "image_file": "cat_memes_17.webp", "emojis": ["😼"] },
+        { "image_file": "cat_memes_18.webp", "emojis": ["😺"] },
+        { "image_file": "cat_memes_19.webp", "emojis": ["🙀"] },
+        { "image_file": "cat_memes_20.webp", "emojis": ["😿"] },
+        { "image_file": "cat_memes_21.webp", "emojis": ["😾"] },
+        { "image_file": "cat_memes_22.webp", "emojis": ["🤣"] },
+        { "image_file": "cat_memes_23.webp", "emojis": ["😹"] },
+        { "image_file": "cat_memes_24.webp", "emojis": ["😂"] },
+        { "image_file": "cat_memes_25.webp", "emojis": ["🐾"] },
+        { "image_file": "cat_memes_26.webp", "emojis": ["😸"] },
+        { "image_file": "cat_memes_27.webp", "emojis": ["😼"] },
+        { "image_file": "cat_memes_28.webp", "emojis": ["😺"] },
+        { "image_file": "cat_memes_29.webp", "emojis": ["🙀"] },
+        { "image_file": "cat_memes_30.webp", "emojis": ["😿"] }
+      ]
     }
   ]
 }
