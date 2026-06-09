@@ -13,27 +13,36 @@ object StickerPackLoader {
         val packs = mutableListOf<StickerPack>()
 
         for (i in 0 until packsArray.length()) {
-            val packObj = packsArray.getJSONObject(i)
-            val stickersArray = packObj.getJSONArray("stickers")
-            val stickers = mutableListOf<Sticker>()
-
-            for (j in 0 until stickersArray.length()) {
+            val p = packsArray.getJSONObject(i)
+            val stickersArray = p.getJSONArray("stickers")
+            val stickers = (0 until stickersArray.length()).map { j ->
                 val s = stickersArray.getJSONObject(j)
-                val emojisArray = s.getJSONArray("emojis")
-                val emojis = (0 until emojisArray.length()).map { emojisArray.getString(it) }
-                stickers.add(Sticker(s.getString("image_file"), emojis))
+                val emojis = s.getJSONArray("emojis").let { arr ->
+                    (0 until arr.length()).map { arr.getString(it) }
+                }
+                Sticker(
+                    imageFileName = s.getString("image_file"),
+                    emojis = emojis,
+                    accessibilityText = s.optString("accessibility_text", "")
+                )
             }
 
-            packs.add(
-                StickerPack(
-                    identifier = packObj.getString("identifier"),
-                    name = packObj.getString("name"),
-                    publisher = packObj.getString("publisher"),
-                    trayImageFile = packObj.getString("tray_image_file"),
-                    stickers = stickers,
-                    animatedStickerPack = packObj.optBoolean("animated_sticker_pack", false)
-                )
-            )
+            packs.add(StickerPack(
+                identifier = p.getString("identifier"),
+                name = p.getString("name"),
+                publisher = p.getString("publisher"),
+                trayImageFile = p.getString("tray_image_file"),
+                stickers = stickers,
+                animatedStickerPack = p.optBoolean("animated_sticker_pack", false),
+                avoidCache = p.optBoolean("avoid_cache", false),
+                imageDataVersion = p.optString("image_data_version", "1"),
+                androidPlayStoreLink = p.optString("android_play_store_link", ""),
+                iosAppStoreLink = p.optString("ios_app_store_link", ""),
+                publisherEmail = p.optString("publisher_email", ""),
+                publisherWebsite = p.optString("publisher_website", ""),
+                privacyPolicyWebsite = p.optString("privacy_policy_website", ""),
+                licenseAgreementWebsite = p.optString("license_agreement_website", "")
+            ))
         }
         return packs
     }

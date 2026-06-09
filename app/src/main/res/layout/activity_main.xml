@@ -1,66 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#1A1A2E">
+    android:background="#0B1020">
 
-    <!-- Header -->
+    <!-- Scrollable content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="180dp"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="28dp"
+                android:paddingBottom="8dp"
+                android:gravity="top">
+
+                <ImageView
+                    android:id="@+id/packIconImage"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_pack_icon"
+                    android:padding="8dp"
+                    android:scaleType="centerInside" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/packName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cat Stickers"
+                        android:textColor="#FFFFFF"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="-0.02" />
+
+                    <TextView
+                        android:id="@+id/packPublisher"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="by Manan"
+                        android:textColor="#80FFFFFF"
+                        android:textSize="14sp"
+                        android:layout_marginTop="2dp" />
+
+                    <TextView
+                        android:id="@+id/stickerCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✦  28 STICKERS"
+                        android:textColor="#E0FFFFFF"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08"
+                        android:background="@drawable/bg_badge"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="6dp"
+                        android:layout_marginTop="10dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Hero sticker -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_hero_card">
+
+                <!-- Keeps 4:3 aspect ratio via padding trick -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:id="@+id/heroAspectSpacer" />
+
+                <ImageView
+                    android:id="@+id/heroSticker"
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:scaleType="centerInside"
+                    android:padding="20dp" />
+            </FrameLayout>
+
+            <!-- Section label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ALL STICKERS"
+                android:textColor="#99FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Sticker grid -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/stickerGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Floating action bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="24dp"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:background="#16213E">
+        android:background="@drawable/bg_action_bar"
+        android:padding="12dp"
+        android:elevation="16dp">
 
-        <TextView
-            android:id="@+id/packName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cat Meme Stickers"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/packPublisher"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="by CatMemeStickers"
-            android:textColor="#A0A0C0"
+        <Button
+            android:id="@+id/addToWhatsApp"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="➕  ADD TO WHATSAPP"
+            android:textColor="#062411"
             android:textSize="14sp"
-            android:layout_marginTop="2dp" />
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:background="@drawable/bg_green_button"
+            android:stateListAnimator="@null" />
 
-        <TextView
-            android:id="@+id/stickerCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="15 stickers"
-            android:textColor="#6C63FF"
-            android:textSize="13sp"
-            android:layout_marginTop="4dp" />
+        <Button
+            android:id="@+id/shareApk"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:text="⬆  SHARE APP"
+            android:textColor="#E6FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:background="@drawable/bg_ghost_button"
+            android:stateListAnimator="@null" />
+
     </LinearLayout>
 
-    <!-- Sticker Grid -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/stickerGrid"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="8dp"
-        android:clipToPadding="false" />
-
-    <!-- Add Button -->
-    <Button
-        android:id="@+id/addToWhatsApp"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:text="Add to WhatsApp"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:backgroundTint="#25D366"
-        android:stateListAnimator="@null" />
-
-</LinearLayout>
+</FrameLayout>

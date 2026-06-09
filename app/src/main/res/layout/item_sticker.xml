@@ -2,14 +2,14 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="4dp">
+    android:padding="5dp">
 
     <ImageView
         android:id="@+id/stickerImage"
         android:layout_width="match_parent"
         android:layout_height="110dp"
         android:scaleType="centerInside"
-        android:background="#0D0D1A"
-        android:padding="6dp" />
+        android:background="@drawable/bg_sticker_cell"
+        android:padding="10dp" />
 
 </FrameLayout>
