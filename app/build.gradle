@@ -22,6 +22,11 @@ android {
         }
     }
 
+    androidResources {
+        // WebP assets must be stored uncompressed so openFd() works in ContentProvider
+        noCompress 'webp'
+    }
+
     buildFeatures {
         viewBinding true
     }

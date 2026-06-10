@@ -44,15 +44,21 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.packPublisher).text = "by ${stickerPack.publisher}"
         findViewById<TextView>(R.id.stickerCount).text = "✦  ${stickerPack.stickers.size} STICKERS"
 
-        // Load first sticker into pack icon and hero
+        // Load first sticker into pack icon and hero — off main thread to avoid jank
         stickerPack.stickers.firstOrNull()?.let { first ->
-            try {
-                assets.open("contents/${first.imageFileName}").use { stream ->
-                    val bmp = BitmapFactory.decodeStream(stream)
-                    findViewById<ImageView>(R.id.packIconImage).setImageBitmap(bmp)
-                    findViewById<ImageView>(R.id.heroSticker).setImageBitmap(bmp)
-                }
-            } catch (_: Exception) {}
+            Thread {
+                try {
+                    assets.open("contents/${first.imageFileName}").use { stream ->
+                        val bmp = BitmapFactory.decodeStream(stream)
+                        Handler(Looper.getMainLooper()).post {
+                            if (!isDestroyed) {
+                                findViewById<ImageView>(R.id.packIconImage).setImageBitmap(bmp)
+                                findViewById<ImageView>(R.id.heroSticker).setImageBitmap(bmp)
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }.start()
         }
 
         val recycler = findViewById<RecyclerView>(R.id.stickerGrid)
