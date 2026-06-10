@@ -36,8 +36,11 @@ class MainActivity : AppCompatActivity() {
         private const val WHITELIST_AUTHORITY     = "com.whatsapp.provider.sticker_whitelist_check"
         private const val WHITELIST_AUTHORITY_BIZ = "com.whatsapp.w4b.provider.sticker_whitelist_check"
 
-        private const val BANNER_AD_UNIT_ID       = "ca-app-pub-6109655326397368/4467762577"
-        private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-6109655326397368/8255798490"
+        // TODO: swap back to real IDs once AdMob account is approved (24-48hrs)
+        // Real banner:       ca-app-pub-6109655326397368/4467762577
+        // Real interstitial: ca-app-pub-6109655326397368/8255798490
+        private const val BANNER_AD_UNIT_ID       = "ca-app-pub-3940256099942544/6300978111"
+        private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
 
         // Hidden dev menu: tap pack name this many times rapidly
         private const val DEV_TAP_COUNT = 5
