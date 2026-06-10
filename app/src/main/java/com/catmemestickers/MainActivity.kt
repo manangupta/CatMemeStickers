@@ -14,28 +14,46 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val ADD_PACK_INTENT    = "com.whatsapp.intent.action.ENABLE_STICKER_PACK"
+        private const val ADD_PACK_INTENT        = "com.whatsapp.intent.action.ENABLE_STICKER_PACK"
         private const val ADD_PACK_INTENT_WA_BIZ = "com.whatsapp.w4b.intent.action.ENABLE_STICKER_PACK"
-        private const val REQUEST_CODE_ADD_PACK = 200
+        private const val REQUEST_CODE_ADD_PACK  = 200
 
-        private const val WA_PACKAGE   = "com.whatsapp"
+        private const val WA_PACKAGE     = "com.whatsapp"
         private const val WA_BIZ_PACKAGE = "com.whatsapp.w4b"
 
         private const val WHITELIST_AUTHORITY     = "com.whatsapp.provider.sticker_whitelist_check"
         private const val WHITELIST_AUTHORITY_BIZ = "com.whatsapp.w4b.provider.sticker_whitelist_check"
+
+        // Test ad unit IDs — replace with real ones before release
+        private const val BANNER_AD_UNIT_ID       = "ca-app-pub-3940256099942544/6300978111"
+        private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
     }
 
     private lateinit var stickerPack: StickerPack
     private lateinit var addButton: Button
+    private var interstitialAd: InterstitialAd? = null
+
+    // Pending WhatsApp action — stored while interstitial is showing
+    private var pendingAction: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Initialise AdMob (non-blocking)
+        MobileAds.initialize(this)
 
         val packs = StickerPackLoader.getStickerPacks(this)
         stickerPack = packs.first()
@@ -69,6 +87,13 @@ class MainActivity : AppCompatActivity() {
         addButton.setOnClickListener { addStickerPackToWhatsApp() }
 
         findViewById<Button>(R.id.shareApk).setOnClickListener { shareApk() }
+
+        // Load banner ad
+        val adView = findViewById<AdView>(R.id.bannerAd)
+        adView.loadAd(AdRequest.Builder().build())
+
+        // Pre-load interstitial so it's ready when user taps Add
+        loadInterstitial()
     }
 
     override fun onResume() {
@@ -76,13 +101,52 @@ class MainActivity : AppCompatActivity() {
         checkWhitelistAsync()
     }
 
-    // 4 — Whitelist check: runs off main thread, updates button on result
+    // --- AdMob ---
+
+    private fun loadInterstitial() {
+        InterstitialAd.load(
+            this,
+            INTERSTITIAL_AD_UNIT_ID,
+            AdRequest.Builder().build(),
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(ad: InterstitialAd) {
+                    interstitialAd = ad
+                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            interstitialAd = null
+                            loadInterstitial()          // pre-load next one
+                            pendingAction?.invoke()     // proceed with WhatsApp
+                            pendingAction = null
+                        }
+                    }
+                }
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    interstitialAd = null
+                    // If ad fails, just run the pending action directly
+                    pendingAction?.invoke()
+                    pendingAction = null
+                }
+            }
+        )
+    }
+
+    /** Show interstitial then run [action], or run [action] directly if no ad ready. */
+    private fun showInterstitialThen(action: () -> Unit) {
+        val ad = interstitialAd
+        if (ad != null) {
+            pendingAction = action
+            ad.show(this)
+        } else {
+            action()
+        }
+    }
+
+    // --- Whitelist check ---
+
     private fun checkWhitelistAsync() {
         Thread {
             val waInstalled  = isAppInstalled(WA_PACKAGE)
             val bizInstalled = isAppInstalled(WA_BIZ_PACKAGE)
-            // Per WhatsApp reference: pack is "added" when whitelisted in every installed app
-            // isPackWhitelisted returns true if the app isn't installed (so AND logic works)
             val waAdded  = if (waInstalled)  isPackWhitelisted(WHITELIST_AUTHORITY)     else true
             val bizAdded = if (bizInstalled) isPackWhitelisted(WHITELIST_AUTHORITY_BIZ) else true
             val added = waAdded && bizAdded
@@ -117,7 +181,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 5 — WhatsApp + WhatsApp Business: show chooser if both installed
+    // --- WhatsApp ---
+
     private fun addStickerPackToWhatsApp() {
         val waInstalled  = isAppInstalled(WA_PACKAGE)
         val bizInstalled = isAppInstalled(WA_BIZ_PACKAGE)
@@ -130,13 +195,16 @@ class MainActivity : AppCompatActivity() {
                 AlertDialog.Builder(this)
                     .setTitle("Add to WhatsApp")
                     .setItems(arrayOf("WhatsApp", "WhatsApp Business")) { _, which ->
-                        if (which == 0) sendAddIntent(ADD_PACK_INTENT, WA_PACKAGE)
-                        else sendAddIntent(ADD_PACK_INTENT_WA_BIZ, WA_BIZ_PACKAGE)
+                        val action = if (which == 0)
+                            { -> sendAddIntent(ADD_PACK_INTENT, WA_PACKAGE) }
+                        else
+                            { -> sendAddIntent(ADD_PACK_INTENT_WA_BIZ, WA_BIZ_PACKAGE) }
+                        showInterstitialThen(action)
                     }
                     .show()
             }
-            waInstalled  -> sendAddIntent(ADD_PACK_INTENT, WA_PACKAGE)
-            else         -> sendAddIntent(ADD_PACK_INTENT_WA_BIZ, WA_BIZ_PACKAGE)
+            waInstalled  -> showInterstitialThen { sendAddIntent(ADD_PACK_INTENT, WA_PACKAGE) }
+            else         -> showInterstitialThen { sendAddIntent(ADD_PACK_INTENT_WA_BIZ, WA_BIZ_PACKAGE) }
         }
     }
 
@@ -154,6 +222,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // --- Share ---
+
     private fun shareApk() {
         val apkFile = File(applicationInfo.sourceDir)
         val uri = FileProvider.getUriForFile(this, "com.catmemestickers.fileprovider", apkFile)
@@ -167,11 +237,12 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent.createChooser(intent, "Share App via"))
     }
 
+    // --- Utils ---
+
     private fun isAppInstalled(pkg: String): Boolean = try {
         packageManager.getPackageInfo(pkg, 0); true
     } catch (e: Exception) { false }
 
-    // 6 — Improved onActivityResult with specific error messages
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
