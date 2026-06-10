@@ -60,6 +60,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Register physical test device so ads show during development
+        MobileAds.setRequestConfiguration(
+            com.google.android.gms.ads.RequestConfiguration.Builder()
+                .setTestDeviceIds(listOf("3A94C020335D047171743DED3457EC78"))
+                .build()
+        )
         MobileAds.initialize(this)
 
         val packs = StickerPackLoader.getStickerPacks(this)
