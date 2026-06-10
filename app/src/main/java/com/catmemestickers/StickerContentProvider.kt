@@ -7,11 +7,13 @@ import android.content.res.AssetFileDescriptor
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import android.util.Log
 
 class StickerContentProvider : ContentProvider() {
 
     companion object {
         const val AUTHORITY = "com.catmemestickers.StickerContentProvider"
+        private const val TAG = "StickerCP"
 
         private const val METADATA_CODE        = 1
         private const val METADATA_SINGLE_CODE = 2
@@ -25,12 +27,16 @@ class StickerContentProvider : ContentProvider() {
             addURI(AUTHORITY, "stickers_asset/*/*", STICKERS_ASSET_CODE)
         }
 
+        // These column names MUST match the official WhatsApp sticker sample exactly
         val METADATA_COLUMNS = arrayOf(
-            "sticker_pack_id", "sticker_pack_name", "sticker_pack_publisher",
+            "sticker_pack_identifier", "sticker_pack_name", "sticker_pack_publisher",
             "sticker_pack_icon", "android_play_store_link",
-            "ios_app_download_link",  // correct column name per WhatsApp spec
-            "publisher_email", "publisher_website", "privacy_policy_website",
-            "license_agreement_website", "image_data_version", "avoid_cache",
+            "ios_app_download_link",
+            "sticker_pack_publisher_email", "sticker_pack_publisher_website",
+            "sticker_pack_privacy_policy_website",
+            "sticker_pack_license_agreement_website",
+            "image_data_version",
+            "whatsapp_will_not_cache_stickers",  // NOT "avoid_cache"
             "animated_sticker_pack"
         )
 
@@ -48,24 +54,35 @@ class StickerContentProvider : ContentProvider() {
         val ctx = context ?: return null
         val packs = StickerPackLoader.getStickerPacks(ctx)
 
-        return when (URI_MATCHER.match(uri)) {
+        val matchCode = URI_MATCHER.match(uri)
+        Log.d(TAG, "query() uri=$uri matchCode=$matchCode caller=${callingPackage}")
+
+        return when (matchCode) {
             METADATA_CODE -> {
                 val cursor = MatrixCursor(METADATA_COLUMNS)
                 packs.forEach { cursor.addRow(it.toMetadataRow()) }
                 cursor.setNotificationUri(ctx.contentResolver, uri)
+                Log.d(TAG, "query() METADATA returning ${cursor.count} packs")
                 cursor
             }
             METADATA_SINGLE_CODE -> {
                 val id = uri.lastPathSegment ?: return null
-                val pack = packs.find { it.identifier == id } ?: return null
+                val pack = packs.find { it.identifier == id } ?: run {
+                    Log.e(TAG, "query() METADATA_SINGLE: pack '$id' not found")
+                    return null
+                }
                 val cursor = MatrixCursor(METADATA_COLUMNS)
                 cursor.addRow(pack.toMetadataRow())
                 cursor.setNotificationUri(ctx.contentResolver, uri)
+                Log.d(TAG, "query() METADATA_SINGLE returning pack '$id' name='${pack.name}' publisher='${pack.publisher}' tray='${pack.trayImageFile}' version='${pack.imageDataVersion}' avoidCache='${pack.avoidCache}' stickers=${pack.stickers.size}")
                 cursor
             }
             STICKERS_CODE -> {
                 val id = uri.lastPathSegment ?: return null
-                val pack = packs.find { it.identifier == id } ?: return null
+                val pack = packs.find { it.identifier == id } ?: run {
+                    Log.e(TAG, "query() STICKERS: pack '$id' not found")
+                    return null
+                }
                 val cursor = MatrixCursor(STICKER_COLUMNS)
                 pack.stickers.forEach { sticker ->
                     cursor.addRow(arrayOf(
@@ -75,18 +92,27 @@ class StickerContentProvider : ContentProvider() {
                     ))
                 }
                 cursor.setNotificationUri(ctx.contentResolver, uri)
+                Log.d(TAG, "query() STICKERS returning ${cursor.count} stickers for '$id'")
                 cursor
             }
-            else -> null
+            else -> {
+                Log.e(TAG, "query() NO MATCH for uri=$uri")
+                null
+            }
         }
     }
 
     override fun openAssetFile(uri: Uri, mode: String): AssetFileDescriptor? {
         val ctx = context ?: return null
-        val fileName = uri.pathSegments.lastOrNull() ?: return null
+        val segments = uri.pathSegments
+        val fileName = segments.lastOrNull() ?: return null
+        Log.d(TAG, "openAssetFile() uri=$uri segments=$segments fileName=$fileName")
         return try {
-            ctx.assets.openFd("contents/$fileName")
+            val afd = ctx.assets.openFd("contents/$fileName")
+            Log.d(TAG, "openAssetFile() SUCCESS: $fileName length=${afd.length}")
+            afd
         } catch (e: Exception) {
+            Log.e(TAG, "openAssetFile() FAILED for $fileName: ${e.message}")
             null
         }
     }
@@ -101,7 +127,17 @@ class StickerContentProvider : ContentProvider() {
         if (animatedStickerPack) "1" else "0"
     )
 
-    override fun getType(uri: Uri): String = "image/webp"
+    override fun getType(uri: Uri): String {
+        val type = when (URI_MATCHER.match(uri)) {
+            METADATA_CODE         -> "vnd.android.cursor.dir/vnd.$AUTHORITY.metadata"
+            METADATA_SINGLE_CODE  -> "vnd.android.cursor.item/vnd.$AUTHORITY.metadata"
+            STICKERS_CODE         -> "vnd.android.cursor.dir/vnd.$AUTHORITY.stickers"
+            STICKERS_ASSET_CODE   -> "image/webp"
+            else                  -> throw IllegalArgumentException("Unknown URI: $uri")
+        }
+        Log.d(TAG, "getType() uri=$uri → $type")
+        return type
+    }
     override fun insert(uri: Uri, values: ContentValues?) = null
     override fun delete(uri: Uri, s: String?, a: Array<String>?) = 0
     override fun update(uri: Uri, v: ContentValues?, s: String?, a: Array<String>?) = 0
