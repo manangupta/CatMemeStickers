@@ -17,10 +17,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CatMemeStickers">
 
-        <!-- AdMob App ID (test) — replace with real ID before release -->
+        <!-- AdMob App ID
+             TODO: swap back to real ID once account is approved:
+                   ca-app-pub-6109655326397368~3442455510
+             Using Google's demo App ID until then so test ads fill correctly -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-6109655326397368~3442455510" />
+            android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <activity
             android:name=".SplashActivity"

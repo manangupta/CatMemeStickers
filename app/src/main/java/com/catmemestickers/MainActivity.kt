@@ -69,7 +69,11 @@ class MainActivity : AppCompatActivity() {
                 .setTestDeviceIds(listOf("3A94C020335D047171743DED3457EC78"))
                 .build()
         )
-        MobileAds.initialize(this)
+        MobileAds.initialize(this) {
+            // SDK ready — load ads now (adUnitId already set in XML)
+            findViewById<AdView>(R.id.bannerAd).loadAd(AdRequest.Builder().build())
+            loadInterstitial()
+        }
 
         val packs = StickerPackLoader.getStickerPacks(this)
         stickerPack = packs.first()
@@ -107,11 +111,6 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.shareApk).setOnClickListener { shareApk() }
 
-        // Load banner ad
-        findViewById<AdView>(R.id.bannerAd).loadAd(AdRequest.Builder().build())
-
-        // Pre-load interstitial
-        loadInterstitial()
     }
 
     override fun onResume() {

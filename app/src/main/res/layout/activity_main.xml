@@ -132,7 +132,7 @@
         android:layout_gravity="bottom"
         android:layout_marginBottom="168dp"
         ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-6109655326397368/4467762577" />
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111" />
 
     <!-- Floating action bar -->
     <LinearLayout
