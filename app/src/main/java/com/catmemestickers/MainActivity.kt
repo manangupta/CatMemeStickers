@@ -36,23 +36,30 @@ class MainActivity : AppCompatActivity() {
         private const val WHITELIST_AUTHORITY     = "com.whatsapp.provider.sticker_whitelist_check"
         private const val WHITELIST_AUTHORITY_BIZ = "com.whatsapp.w4b.provider.sticker_whitelist_check"
 
-        // Test ad unit IDs — replace with real ones before release
         private const val BANNER_AD_UNIT_ID       = "ca-app-pub-6109655326397368/4467762577"
         private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-6109655326397368/8255798490"
+
+        // Hidden dev menu: tap pack name this many times rapidly
+        private const val DEV_TAP_COUNT = 5
+        private const val DEV_TAP_WINDOW_MS = 2000L
     }
 
     private lateinit var stickerPack: StickerPack
     private lateinit var addButton: Button
     private var interstitialAd: InterstitialAd? = null
-
-    // Pending WhatsApp action — stored while interstitial is showing
     private var pendingAction: (() -> Unit)? = null
+
+    // Dev mode: bypass whitelist check so Add button always shows
+    private var devModeForceAdd = false
+
+    // Hidden tap counter
+    private var devTapCount = 0
+    private var devTapFirstTime = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialise AdMob (non-blocking)
         MobileAds.initialize(this)
 
         val packs = StickerPackLoader.getStickerPacks(this)
@@ -62,7 +69,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.packPublisher).text = "by ${stickerPack.publisher}"
         findViewById<TextView>(R.id.stickerCount).text = "✦  ${stickerPack.stickers.size} STICKERS"
 
-        // Load first sticker into pack icon and hero — off main thread to avoid jank
+        // 5 rapid taps on the pack name → hidden dev menu
+        findViewById<TextView>(R.id.packName).setOnClickListener { onDevTap() }
+
+        // Load first sticker into pack icon and hero — off main thread
         stickerPack.stickers.firstOrNull()?.let { first ->
             Thread {
                 try {
@@ -89,10 +99,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.shareApk).setOnClickListener { shareApk() }
 
         // Load banner ad
-        val adView = findViewById<AdView>(R.id.bannerAd)
-        adView.loadAd(AdRequest.Builder().build())
+        findViewById<AdView>(R.id.bannerAd).loadAd(AdRequest.Builder().build())
 
-        // Pre-load interstitial so it's ready when user taps Add
+        // Pre-load interstitial
         loadInterstitial()
     }
 
@@ -101,7 +110,51 @@ class MainActivity : AppCompatActivity() {
         checkWhitelistAsync()
     }
 
-    // --- AdMob ---
+    // -------------------------------------------------------------------------
+    // Hidden dev menu — 5 taps on pack name within 2 seconds
+    // -------------------------------------------------------------------------
+
+    private fun onDevTap() {
+        val now = System.currentTimeMillis()
+        if (now - devTapFirstTime > DEV_TAP_WINDOW_MS) {
+            // Window expired — reset
+            devTapCount = 1
+            devTapFirstTime = now
+        } else {
+            devTapCount++
+        }
+
+        if (devTapCount >= DEV_TAP_COUNT) {
+            devTapCount = 0
+            showDevMenu()
+        }
+    }
+
+    private fun showDevMenu() {
+        val forceLabel = if (devModeForceAdd) "✅ Force Add: ON  (tap to disable)"
+                         else                 "Force Add: OFF (tap to enable)"
+
+        AlertDialog.Builder(this)
+            .setTitle("🛠  Dev Options")
+            .setMessage(
+                "Force Add mode bypasses the WhatsApp whitelist check so " +
+                "the Add button always appears — useful for testing ads.\n\n" +
+                "To actually remove the pack, open WhatsApp → Stickers → " +
+                "Cat Stickers → Remove."
+            )
+            .setPositiveButton(forceLabel) { _, _ ->
+                devModeForceAdd = !devModeForceAdd
+                val status = if (devModeForceAdd) "ON" else "OFF"
+                Toast.makeText(this, "Force Add: $status", Toast.LENGTH_SHORT).show()
+                checkWhitelistAsync()   // refresh button state immediately
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // -------------------------------------------------------------------------
+    // AdMob
+    // -------------------------------------------------------------------------
 
     private fun loadInterstitial() {
         InterstitialAd.load(
@@ -114,15 +167,14 @@ class MainActivity : AppCompatActivity() {
                     ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                         override fun onAdDismissedFullScreenContent() {
                             interstitialAd = null
-                            loadInterstitial()          // pre-load next one
-                            pendingAction?.invoke()     // proceed with WhatsApp
+                            loadInterstitial()
+                            pendingAction?.invoke()
                             pendingAction = null
                         }
                     }
                 }
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     interstitialAd = null
-                    // If ad fails, just run the pending action directly
                     pendingAction?.invoke()
                     pendingAction = null
                 }
@@ -130,7 +182,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    /** Show interstitial then run [action], or run [action] directly if no ad ready. */
     private fun showInterstitialThen(action: () -> Unit) {
         val ad = interstitialAd
         if (ad != null) {
@@ -141,9 +192,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- Whitelist check ---
+    // -------------------------------------------------------------------------
+    // Whitelist check
+    // -------------------------------------------------------------------------
 
     private fun checkWhitelistAsync() {
+        if (devModeForceAdd) {
+            // Dev mode: always show Add button regardless of whitelist
+            addButton.text = "➕  Add to WhatsApp"
+            addButton.backgroundTintList =
+                android.content.res.ColorStateList.valueOf(0xFF25D366.toInt())
+            addButton.isEnabled = true
+            return
+        }
+
         Thread {
             val waInstalled  = isAppInstalled(WA_PACKAGE)
             val bizInstalled = isAppInstalled(WA_BIZ_PACKAGE)
@@ -181,7 +243,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- WhatsApp ---
+    // -------------------------------------------------------------------------
+    // WhatsApp
+    // -------------------------------------------------------------------------
 
     private fun addStickerPackToWhatsApp() {
         val waInstalled  = isAppInstalled(WA_PACKAGE)
@@ -222,7 +286,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- Share ---
+    // -------------------------------------------------------------------------
+    // Share
+    // -------------------------------------------------------------------------
 
     private fun shareApk() {
         val apkFile = File(applicationInfo.sourceDir)
@@ -237,7 +303,9 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent.createChooser(intent, "Share App via"))
     }
 
-    // --- Utils ---
+    // -------------------------------------------------------------------------
+    // Utils
+    // -------------------------------------------------------------------------
 
     private fun isAppInstalled(pkg: String): Boolean = try {
         packageManager.getPackageInfo(pkg, 0); true
@@ -250,6 +318,7 @@ class MainActivity : AppCompatActivity() {
         when (resultCode) {
             RESULT_OK -> {
                 Toast.makeText(this, "🎉 Sticker pack added to WhatsApp!", Toast.LENGTH_LONG).show()
+                devModeForceAdd = false   // turn off dev mode after successful add
                 checkWhitelistAsync()
             }
             RESULT_CANCELED -> {
